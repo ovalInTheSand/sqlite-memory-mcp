@@ -1,51 +1,55 @@
-# 🧠 SQLite Memory MCP: Self-Learning Agent Memory System for Claude Code
+# SQLite Memory MCP: Self-Learning Agent Memory System for Claude Code
 
-**Turn Claude Code into a learning machine** with intelligent memory persistence that remembers everything, learns from patterns, and optimizes itself. Features automatic memory tiering, relationship discovery, performance monitoring, and one-command setup.
+**Turn Claude Code into a learning machine** with intelligent memory persistence that remembers everything, learns from patterns, and optimizes itself. Features automatic memory tiering, relationship discovery, performance monitoring, and one-command setup. 
 
-> **🚀 Production-Ready:** Self-optimizing SQLite backend • **🎯 Zero-Config:** Interactive setup wizard • **📊 Smart Analytics:** Performance insights & health monitoring • **🔗 Memory Graph:** Semantic relationship mapping • **⚡ Lightning Fast:** FTS5 search with intelligent caching
+> **Production-Ready:** Self-optimizing SQLite backend 
+**Zero-Config:** Interactive setup wizard 
+**Smart Analytics:** Performance insights & health monitoring 
+**Memory Graph:** Semantic relationship mapping 
+**Lightning Fast:** FTS5 search with intelligent caching
 
 ## 📑 Table of Contents
 
-- [🚀 Key Features](#-key-features)
+- [Key Features](#-key-features)
   - [Intelligent Memory Management](#intelligent-memory-management)
   - [Performance & Scalability](#performance--scalability)
   - [Dynamic Agent Schema](#dynamic-agent-schema)
   - [Advanced Analytics](#advanced-analytics)
   - [Ease of Use](#ease-of-use-new)
-- [📦 What You Get](#-what-you-get)
-- [⚡ Quick Start](#-quick-start)
-  - [🎯 One-Command Setup](#-one-command-setup-new)
-  - [🛠️ Management Commands](#️-management-commands-new)
-  - [✅ Verify It's Working](#-verify-its-working)
-- [🏗️ Architecture Overview](#️-architecture-overview)
+- [What You Get](#-what-you-get)
+- [Quick Start](#-quick-start)
+  - [One-Command Setup](#-one-command-setup-new)
+  - [Management Commands](#️-management-commands-new)
+  - [Verify It's Working](#-verify-its-working)
+- [Architecture Overview](#️-architecture-overview)
   - [Core Tables](#core-tables)
   - [Performance & Monitoring](#performance--monitoring)
   - [Advanced Views](#advanced-views)
-- [🔧 Configuration](#-configuration)
+- [Configuration](#-configuration)
   - [Performance Settings](#performance-settings-configsettingsenv)
   - [MCP Permissions](#mcp-permissions-claudesettingsjson)
-- [💡 Usage Examples](#-usage-examples)
+- [Usage Examples](#-usage-examples)
   - [Basic Memory Operations](#basic-memory-operations)
   - [Memory Relationship Management](#memory-relationship-management)
   - [Agent-Specific Tables](#agent-specific-tables)
   - [Performance Monitoring](#performance-monitoring)
-- [🔍 Advanced Features](#-advanced-features)
+- [Advanced Features](#-advanced-features)
   - [Automatic Memory Tiering](#automatic-memory-tiering)
   - [Smart Relationship Discovery](#smart-relationship-discovery)
   - [Performance Optimization](#performance-optimization)
   - [Agent Resource Management](#agent-resource-management)
-- [🛠️ Maintenance & Troubleshooting](#️-maintenance--troubleshooting)
+- [Maintenance & Troubleshooting](#️-maintenance--troubleshooting)
   - [Database Health Checks](#database-health-checks)
   - [Performance Tuning](#performance-tuning)
   - [Backup & Recovery](#backup--recovery)
-- [📈 Monitoring & Analytics](#-monitoring--analytics)
-- [🔗 Code References](#-code-references)
+- [Monitoring & Analytics](#-monitoring--analytics)
+- [Code References](#-code-references)
   - [Setup Scripts](#setup-scripts)
   - [Configuration Files](#configuration-files)
   - [Python Toolkit](#python-toolkit)
   - [Database Schema](#database-schema)
 
-## **🚀 Key Features**
+## **Key Features**
 
 ### **Intelligent Memory Management**
 - **Multi-tier memory system** (hot/warm/cold/archived) with automatic promotion
@@ -78,7 +82,7 @@
 - **One-click optimization** and backup with verification
 - **Smart defaults** based on system capabilities and usage patterns
 
-## **📦 What You Get**
+## **What You Get**
 
 - **Central configuration**: `config/settings.env` with performance tuning
 - **Enhanced STRICT schema** with FTS5, triggers, and intelligent indexing
@@ -87,9 +91,9 @@
 - **User/project scope** MCP registration with enhanced permissions
 - **One-command installation** with automatic dependency management
 
-## **⚡ Quick Start**
+## **Quick Start**
 
-### 🎯 **One-Command Setup** (New!)
+### **One-Command Setup** (New!)
 ```bash
 # Clone and run interactive setup
 git clone <your-repo-url>
@@ -104,7 +108,7 @@ The interactive installer handles everything:
 - ✅ **MCP server registration** (user or project scope)
 - ✅ **Permission setup** with security options
 
-### 🛠️ **Management Commands** (New!)
+### **Management Commands** (New!)
 ```bash
 ./manage.sh status      # Comprehensive health dashboard
 ./manage.sh doctor      # Diagnose and fix issues  
@@ -113,16 +117,16 @@ The interactive installer handles everything:
 ./manage.sh config      # Change settings interactively
 ```
 
-### ✅ **Verify It's Working**
+### **Verify It's Working**
 ```bash
 # In Claude Code
 /mcp                    # Check server status  
 "Show database health"  # Test functionality
 ```
 
-🎉 **Done!** Your intelligent memory system is ready.
+**Done!** Your intelligent memory system is ready.
 
-## **🏗️ Architecture Overview**
+## **Architecture Overview**
 
 ### **Core Tables**
 - **`memory`** - Enhanced with access tracking, tier management, relationship support
@@ -142,7 +146,7 @@ The interactive installer handles everything:
 - **`v_agent_performance`** - Per-agent analytics and resource usage
 - **`v_memory_search`** - Enhanced FTS5 search with tier awareness
 
-## **🔧 Configuration**
+## **Configuration**
 
 ### **Performance Settings** (`config/settings.env`)
 ```bash
@@ -188,7 +192,7 @@ ENABLE_PERFORMANCE_MONITORING="1"  # Track query performance
 }
 ```
 
-## **💡 Usage Examples**
+## **Usage Examples**
 
 ### **Basic Memory Operations**
 ```sql
@@ -256,7 +260,7 @@ FROM v_agent_performance
 ORDER BY avg_query_time_ms DESC;
 ```
 
-## **🔍 Advanced Features**
+## **Advanced Features**
 
 ### **Automatic Memory Tiering**
 Memories automatically move between tiers based on access patterns:
@@ -284,7 +288,7 @@ The system can suggest relationships based on:
 - **Performance monitoring** per agent for optimization
 - **Memory budget** management with configurable limits
 
-## **🛠️ Maintenance & Troubleshooting**
+## **Maintenance & Troubleshooting**
 
 ### **Database Health Checks**
 ```bash
@@ -319,7 +323,7 @@ sqlite3 "$CLAUDE_MEMORY_DB" ".backup $HOME/.claude/memory/backup_$(date +%Y%m%d)
 cp "$HOME/.claude/memory/backup_20241201.db" "$CLAUDE_MEMORY_DB"
 ```
 
-## **📈 Monitoring & Analytics**
+## **Monitoring & Analytics**
 
 The system provides comprehensive monitoring through views and the Python toolkit:
 
@@ -330,7 +334,7 @@ The system provides comprehensive monitoring through views and the Python toolki
 
 Use the `templates/mcp_tools.py` toolkit for programmatic access to all monitoring and management functions.
 
-## **🔗 Code References**
+## **Code References**
 
 ### **Setup Scripts**
 - [`setup.sh`](./setup.sh) - Interactive one-command setup wizard
