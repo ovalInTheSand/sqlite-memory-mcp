@@ -8,7 +8,7 @@
 **Memory Graph:** Semantic relationship mapping 
 **Lightning Fast:** FTS5 search with intelligent caching
 
-## 📑 Table of Contents
+## Table of Contents
 
 - [Key Features](#-key-features)
   - [Intelligent Memory Management](#intelligent-memory-management)
