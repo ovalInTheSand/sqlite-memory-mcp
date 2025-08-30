@@ -1,6 +1,49 @@
-# Enhanced SQLite Memory MCP for Claude Code
+# 🧠 SQLite Memory MCP: Self-Learning Agent Memory System for Claude Code
 
-A high-performance, intelligent SQLite-backed **agent memory system** for Claude Code with dynamic schema management, performance monitoring, and smart memory organization.
+**Turn Claude Code into a learning machine** with intelligent memory persistence that remembers everything, learns from patterns, and optimizes itself. Features automatic memory tiering, relationship discovery, performance monitoring, and one-command setup.
+
+> **🚀 Production-Ready:** Self-optimizing SQLite backend • **🎯 Zero-Config:** Interactive setup wizard • **📊 Smart Analytics:** Performance insights & health monitoring • **🔗 Memory Graph:** Semantic relationship mapping • **⚡ Lightning Fast:** FTS5 search with intelligent caching
+
+## 📑 Table of Contents
+
+- [🚀 Key Features](#-key-features)
+  - [Intelligent Memory Management](#intelligent-memory-management)
+  - [Performance & Scalability](#performance--scalability)
+  - [Dynamic Agent Schema](#dynamic-agent-schema)
+  - [Advanced Analytics](#advanced-analytics)
+  - [Ease of Use](#ease-of-use-new)
+- [📦 What You Get](#-what-you-get)
+- [⚡ Quick Start](#-quick-start)
+  - [🎯 One-Command Setup](#-one-command-setup-new)
+  - [🛠️ Management Commands](#️-management-commands-new)
+  - [✅ Verify It's Working](#-verify-its-working)
+- [🏗️ Architecture Overview](#️-architecture-overview)
+  - [Core Tables](#core-tables)
+  - [Performance & Monitoring](#performance--monitoring)
+  - [Advanced Views](#advanced-views)
+- [🔧 Configuration](#-configuration)
+  - [Performance Settings](#performance-settings-configsettingsenv)
+  - [MCP Permissions](#mcp-permissions-claudesettingsjson)
+- [💡 Usage Examples](#-usage-examples)
+  - [Basic Memory Operations](#basic-memory-operations)
+  - [Memory Relationship Management](#memory-relationship-management)
+  - [Agent-Specific Tables](#agent-specific-tables)
+  - [Performance Monitoring](#performance-monitoring)
+- [🔍 Advanced Features](#-advanced-features)
+  - [Automatic Memory Tiering](#automatic-memory-tiering)
+  - [Smart Relationship Discovery](#smart-relationship-discovery)
+  - [Performance Optimization](#performance-optimization)
+  - [Agent Resource Management](#agent-resource-management)
+- [🛠️ Maintenance & Troubleshooting](#️-maintenance--troubleshooting)
+  - [Database Health Checks](#database-health-checks)
+  - [Performance Tuning](#performance-tuning)
+  - [Backup & Recovery](#backup--recovery)
+- [📈 Monitoring & Analytics](#-monitoring--analytics)
+- [🔗 Code References](#-code-references)
+  - [Setup Scripts](#setup-scripts)
+  - [Configuration Files](#configuration-files)
+  - [Python Toolkit](#python-toolkit)
+  - [Database Schema](#database-schema)
 
 ## **🚀 Key Features**
 
@@ -286,3 +329,30 @@ The system provides comprehensive monitoring through views and the Python toolki
 - **Maintenance scheduling** - Automatic optimization based on usage patterns
 
 Use the `templates/mcp_tools.py` toolkit for programmatic access to all monitoring and management functions.
+
+## **🔗 Code References**
+
+### **Setup Scripts**
+- [`setup.sh`](./setup.sh) - Interactive one-command setup wizard
+- [`manage.sh`](./manage.sh) - Management commands for status, optimization, backup
+- [`scripts/install_sqlite_and_mcp.sh`](./scripts/install_sqlite_and_mcp.sh) - SQLite and MCP installation script
+- [`scripts/register_user_scope.sh`](./scripts/register_user_scope.sh) - User scope MCP registration
+- [`scripts/register_project_scope.sh`](./scripts/register_project_scope.sh) - Project scope MCP registration
+
+### **Configuration Files**
+- [`config/settings.env.example`](./config/settings.env.example) - Environment configuration template
+- [`config/settings.env`](./config/settings.env) - Active environment configuration
+- [`templates/settings.user.sample.json`](./templates/settings.user.sample.json) - Claude settings template
+
+### **Python Toolkit**
+- [`templates/mcp_tools.py`](./templates/mcp_tools.py) - Complete Python toolkit for advanced operations
+- [`bin/add-sqlite-memory`](./bin/add-sqlite-memory) - CLI tool for MCP server management
+
+### **Database Schema**
+- [`sql/schema.sql`](./sql/schema.sql) - Complete database schema with tables, views, and triggers
+- [`sql/bootstrap.sql`](./sql/bootstrap.sql) - Initial setup and sample data
+
+### **Documentation**
+- [`config/docs/00-overview.md`](./config/docs/00-overview.md) - System architecture overview
+- [`config/docs/04-usage.md`](./config/docs/04-usage.md) - Detailed usage examples
+- [`config/docs/05-security-backups.md`](./config/docs/05-security-backups.md) - Security and backup procedures
