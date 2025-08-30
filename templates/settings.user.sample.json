@@ -1,0 +1,26 @@
+{
+  "env": {
+    "CLAUDE_MEMORY_DB": "/home/REPLACE_ME/.claude/memory/claude_memory.db",
+    "CLAUDE_MEMORY_PERFORMANCE_ENABLED": "1"
+  },
+  "permissions": {
+    "allow": [
+      "mcp__sqlite_memory__read_query",
+      "mcp__sqlite_memory__list_tables",
+      "mcp__sqlite_memory__describe_table",
+      "mcp__sqlite_memory__append_insight"
+    ],
+    "deny": [
+      "mcp__sqlite_memory__write_query",
+      "mcp__sqlite_memory__create_table"
+    ]
+  },
+  "tools": {
+    "sqlite_memory": {
+      "performance_monitoring": true,
+      "auto_optimization": true,
+      "memory_tier_management": true,
+      "relationship_tracking": true
+    }
+  }
+}

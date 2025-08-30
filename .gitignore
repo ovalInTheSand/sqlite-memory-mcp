@@ -1,0 +1,36 @@
+# SQLite database files
+*.db
+*.db-*
+*.sqlite*
+*.wal
+*.shm
+
+# Local Claude settings (user-specific)
+.claude/
+.claude/settings.local.json
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyc
+
+# Backup files
+backups/
+*.bak
+*.backup
+
+# OS specific
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# IDE
+.vscode/
+.idea/
+*.sublime-*
+
+# Local configuration overrides
+config/settings.local.env

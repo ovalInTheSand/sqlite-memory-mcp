@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "sqlite_memory": {
+      "command": "mcp-server-sqlite",
+      "args": ["--db-path", "${CLAUDE_MEMORY_DB}"],
+      "env": {}
+    }
+  }
+}

@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+set -euo pipefail
+root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
+export PATH="$HOME/.local/bin:$PATH"
+
+# settings
+# shellcheck disable=SC1091
+source "$root/config/settings.env"
+
+# install + schema
+"$root/scripts/install_sqlite_and_mcp.sh"
+
+# ensure user settings exist (env + read-only tool permissions)
+mkdir -p "$HOME/.claude"
+SETTINGS="$HOME/.claude/settings.json"
+if [[ ! -f "$SETTINGS" ]]; then
+  cp "$root/templates/settings.user.sample.json" "$SETTINGS"
+  sed -i "s#/home/REPLACE_ME#${HOME}#g" "$SETTINGS"
+  echo "✅ Wrote $SETTINGS (review env & permissions)"
+else
+  echo "ℹ️  $SETTINGS exists; verify env.CLAUDE_MEMORY_DB and permissions."
+fi
+
+echo
+echo "➡️  Next (manual):"
+echo "   scripts/register_user_scope.sh     # user-wide"
+echo "   # or"
+echo "   scripts/register_project_scope.sh  # writes .mcp.json in this repo"
