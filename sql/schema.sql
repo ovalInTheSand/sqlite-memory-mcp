@@ -1,4 +1,8 @@
--- =============== CORE ENTITIES (Enhanced with Performance & Dynamic Schema) ===============
+-- Schema Version: 2.5 (2025-08-30)
+-- 2.3 -> 2.4 (Dynamic Tiering & Decay):
+--   * Introduce dynamic access decay & adaptive tier recalibration (code-driven)
+--   * No structural changes; version bump for coordinated runtime logic
+--   * Migration adds tracking keys only if missing
 CREATE TABLE IF NOT EXISTS projects (
   id           INTEGER PRIMARY KEY,
   slug         TEXT NOT NULL UNIQUE,
@@ -182,7 +186,7 @@ CREATE TABLE IF NOT EXISTS optimization_log (
   executed_at TEXT NOT NULL DEFAULT (datetime('now'))
 ) STRICT;
 
--- =============== ENHANCED INDEXES ===============
+-- NOTE: Base schema reflects latest version (2.6). Earlier versions should apply migrations sequentially.
 CREATE INDEX IF NOT EXISTS idx_memory_proj_kind        ON memory(project_id, kind);
 CREATE INDEX IF NOT EXISTS idx_memory_status           ON memory(status);
 CREATE INDEX IF NOT EXISTS idx_memory_priority_recent  ON memory(status, priority DESC, created_at);
@@ -202,6 +206,11 @@ CREATE INDEX IF NOT EXISTS idx_agent_sessions_active   ON agent_sessions(last_ac
 CREATE INDEX IF NOT EXISTS idx_optimization_log_time   ON optimization_log(executed_at);
 CREATE INDEX IF NOT EXISTS idx_agent_tables_agent      ON agent_tables(agent_id);
 CREATE INDEX IF NOT EXISTS idx_agent_tables_used       ON agent_tables(last_used);
+-- Quick Win 2.3: partial index focused on active (non-archived) memories by recency
+CREATE INDEX IF NOT EXISTS idx_memory_last_access_active ON memory(last_accessed) WHERE memory_tier!='archived';
+-- 2.6: Composite indexes to accelerate relationship queries by (from,type) and (to,type)
+CREATE INDEX IF NOT EXISTS idx_memory_graph_from_type  ON memory_graph(from_memory_id, relationship_type);
+CREATE INDEX IF NOT EXISTS idx_memory_graph_to_type    ON memory_graph(to_memory_id, relationship_type);
 
 -- =============== JSON HELPERS ===============
 CREATE VIEW IF NOT EXISTS v_memory_tags AS
@@ -220,19 +229,24 @@ CREATE VIRTUAL TABLE IF NOT EXISTS memory_fts USING fts5(
 
 -- =============== ENHANCED TRIGGERS ===============
 -- Memory access tracking and tier management
+-- Dynamic threshold tier trigger (uses settings values; fallback to defaults if missing)
 CREATE TRIGGER IF NOT EXISTS memory_access_tracker
 AFTER UPDATE OF access_count, last_accessed ON memory
-WHEN NEW.access_count != OLD.access_count
+WHEN NEW.access_count != OLD.access_count AND NEW.memory_tier != 'archived'
 BEGIN
-  UPDATE memory 
-  SET memory_tier = CASE 
-    WHEN NEW.access_count > 50 AND NEW.memory_tier != 'hot' THEN 'hot'
-    WHEN NEW.access_count > 20 AND NEW.memory_tier = 'cold' THEN 'warm'
-    ELSE NEW.memory_tier
-  END
+  UPDATE memory
+  SET memory_tier = (
+    CASE
+      WHEN NEW.access_count >= COALESCE((SELECT CAST(value AS INTEGER) FROM settings WHERE key='tier_hot_threshold'),50) THEN 'hot'
+      WHEN NEW.access_count >= COALESCE((SELECT CAST(value AS INTEGER) FROM settings WHERE key='tier_warm_threshold'),20) THEN 'warm'
+      WHEN NEW.access_count >= COALESCE((SELECT CAST(value AS INTEGER) FROM settings WHERE key='tier_cold_threshold'),5) THEN 'cold'
+      ELSE memory_tier
+    END
+  )
   WHERE id = NEW.id;
 END;
 
+-- Automatic archival (previously set to 'cold'); ensures rarely accessed, old memories move to archived tier
 CREATE TRIGGER IF NOT EXISTS memory_auto_archive
 AFTER UPDATE OF last_accessed ON memory
 WHEN datetime(NEW.last_accessed, '+90 days') < datetime('now')
@@ -240,7 +254,7 @@ WHEN datetime(NEW.last_accessed, '+90 days') < datetime('now')
   AND NEW.access_count < 5
 BEGIN
   UPDATE memory 
-  SET memory_tier = 'cold'
+  SET memory_tier = 'archived'
   WHERE id = NEW.id;
 END;
 
@@ -357,18 +371,11 @@ SELECT 'avg_query_time_24h', CAST(AVG(execution_time_ms) AS INTEGER)
 FROM query_metrics WHERE created_at >= datetime('now', '-24 hours');
 
 -- =============== TOUCH TRIGGERS ===============
-CREATE TRIGGER IF NOT EXISTS projects_ut AFTER UPDATE ON projects
-BEGIN UPDATE projects SET updated_at = datetime('now') WHERE id = new.id; END;
-CREATE TRIGGER IF NOT EXISTS agents_ut   AFTER UPDATE ON agents
-BEGIN UPDATE agents   SET updated_at = datetime('now') WHERE id = new.id; END;
-CREATE TRIGGER IF NOT EXISTS memory_ut   AFTER UPDATE ON memory
-BEGIN UPDATE memory   SET updated_at = datetime('now') WHERE id = new.id; END;
-CREATE TRIGGER IF NOT EXISTS docs_ut     AFTER UPDATE ON docs
-BEGIN UPDATE docs     SET updated_at = datetime('now') WHERE id = new.id; END;
+-- Removed recursive touch triggers in v2.1. Maintain updated_at in application layer.
 
 -- =============== INITIALIZATION & SETTINGS ===============
 INSERT OR IGNORE INTO settings (key, value) VALUES 
-  ('schema_version', '2.0'),
+  ('schema_version', '2.6'),
   ('auto_optimize_enabled', 1),
   ('auto_optimize_interval_hours', 4),
   ('memory_tier_promotion_threshold', 50),
@@ -376,4 +383,33 @@ INSERT OR IGNORE INTO settings (key, value) VALUES
   ('max_agent_tables_per_agent', 10),
   ('performance_monitoring_retention_days', 30);
 
+-- Migration tracking (introduced in 2.2)
+CREATE TABLE IF NOT EXISTS schema_migrations (
+  version TEXT PRIMARY KEY,
+  applied_at TEXT NOT NULL DEFAULT (datetime('now')),
+  description TEXT
+) STRICT;
+
+INSERT OR IGNORE INTO schema_migrations(version, description) VALUES
+  ('2.2', 'Introduce schema_migrations tracking table'),
+  ('2.3', 'Quick wins: partial index + scheduler foundations'),
+  ('2.4', 'Dynamic tiering & access decay (runtime logic)'),
+  ('2.5', 'Dynamic tier trigger + maintenance log table'),
+  ('2.6', 'Composite relationship indexes + logging infra');
+
+-- Maintenance log (new in 2.5)
+CREATE TABLE IF NOT EXISTS maintenance_log (
+  id INTEGER PRIMARY KEY,
+  action TEXT NOT NULL,
+  details_json TEXT,
+  duration_ms INTEGER,
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+) STRICT;
+
 PRAGMA optimize;
+
+-- Safety cleanup (ensure old recursive touch triggers gone even if lingering from pre-2.1 versions)
+DROP TRIGGER IF EXISTS projects_ut;
+DROP TRIGGER IF EXISTS agents_ut;
+DROP TRIGGER IF EXISTS memory_ut;
+DROP TRIGGER IF EXISTS docs_ut;

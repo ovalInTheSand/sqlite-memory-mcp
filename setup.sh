@@ -328,41 +328,79 @@ log_info "Configuring user settings..."
 mkdir -p "$HOME/.claude"
 SETTINGS="$HOME/.claude/settings.json"
 
-if [ "$ENABLE_WRITES" = "1" ]; then
-    # Create settings with write permissions
-    cat > "$SETTINGS" <<EOF
+# Ensure directory perms (restrictive)
+chmod 700 "$HOME/.claude" || true
+mkdir -p "$(dirname "$CLAUDE_MEMORY_DB")"
+chmod 700 "$(dirname "$CLAUDE_MEMORY_DB")" || true
+
+merge_settings() {
+    # Args: $1 (write_enabled: 0/1)
+    local write_enabled="$1"
+    local tmpfile
+    tmpfile="$(mktemp)"
+    if command -v jq >/dev/null 2>&1 && [ -f "$SETTINGS" ]; then
+        jq \
+            --arg db "$CLAUDE_MEMORY_DB" \
+            --argjson we "$write_enabled" \
+            '(.env.CLAUDE_MEMORY_DB = $db) 
+             | (.env.CLAUDE_MEMORY_PERFORMANCE_ENABLED = "1")
+             | (.tools.sqlite_memory.performance_monitoring = true)
+             | (.tools.sqlite_memory.auto_optimization = true)
+             | (.tools.sqlite_memory.memory_tier_management = true)
+             | (.tools.sqlite_memory.relationship_tracking = true)
+             | (.tools.sqlite_memory.write_enabled = ($we==1))
+             | (.permissions.allow += ["mcp__sqlite_memory__read_query",
+                                                                 "mcp__sqlite_memory__list_tables",
+                                                                 "mcp__sqlite_memory__describe_table",
+                                                                 "mcp__sqlite_memory__append_insight"]
+                 | .permissions.allow |= unique
+                )
+             | (if $we==1 then (.permissions.allow += ["mcp__sqlite_memory__write_query","mcp__sqlite_memory__create_table"]) else . end)
+             | (.permissions.allow |= unique)
+            ' "$SETTINGS" > "$tmpfile" 2>/dev/null || return 1
+        mv "$tmpfile" "$SETTINGS"
+    else
+        # Fallback: overwrite from templates
+        if [ "$write_enabled" = "1" ]; then
+            cat > "$SETTINGS" <<EOF
 {
-  "env": {
-    "CLAUDE_MEMORY_DB": "$CLAUDE_MEMORY_DB",
-    "CLAUDE_MEMORY_PERFORMANCE_ENABLED": "1"
-  },
-  "permissions": {
-    "allow": [
-      "mcp__sqlite_memory__read_query",
-      "mcp__sqlite_memory__list_tables",
-      "mcp__sqlite_memory__describe_table",
-      "mcp__sqlite_memory__append_insight",
-      "mcp__sqlite_memory__write_query",
-      "mcp__sqlite_memory__create_table"
-    ]
-  },
-  "tools": {
-    "sqlite_memory": {
-      "performance_monitoring": true,
-      "auto_optimization": true,
-      "memory_tier_management": true,
-      "relationship_tracking": true,
-      "write_enabled": true
+    "env": {
+        "CLAUDE_MEMORY_DB": "$CLAUDE_MEMORY_DB",
+        "CLAUDE_MEMORY_PERFORMANCE_ENABLED": "1"
+    },
+    "permissions": {
+        "allow": [
+            "mcp__sqlite_memory__read_query",
+            "mcp__sqlite_memory__list_tables",
+            "mcp__sqlite_memory__describe_table",
+            "mcp__sqlite_memory__append_insight",
+            "mcp__sqlite_memory__write_query",
+            "mcp__sqlite_memory__create_table"
+        ]
+    },
+    "tools": {
+        "sqlite_memory": {
+            "performance_monitoring": true,
+            "auto_optimization": true,
+            "memory_tier_management": true,
+            "relationship_tracking": true,
+            "write_enabled": true
+        }
     }
-  }
 }
 EOF
-else
-    # Create settings with read-only permissions
-    cp "$ROOT/templates/settings.user.sample.json" "$SETTINGS"
-    sed -i "s#/home/REPLACE_ME#${HOME}#g" "$SETTINGS"
-    sed -i "s#/home/REPLACE_ME#${HOME}#g" "$SETTINGS"
-fi
+        else
+            cp "$ROOT/templates/settings.user.sample.json" "$SETTINGS"
+            sed -i "s#/home/REPLACE_ME#${HOME}#g" "$SETTINGS"
+        fi
+    fi
+}
+
+merge_settings "$ENABLE_WRITES" || log_warning "Settings merge failed—fallback may be incomplete"
+
+# Restrict settings file perms
+chmod 600 "$SETTINGS" || true
+if [ -f "$CLAUDE_MEMORY_DB" ]; then chmod 600 "$CLAUDE_MEMORY_DB" || true; fi
 
 log_success "MCP server registered"
 

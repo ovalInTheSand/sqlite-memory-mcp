@@ -731,6 +731,7 @@ cmd_help() {
     echo -e "  ${YELLOW}optimize${NC}   Run database optimization and maintenance"
     echo -e "  ${YELLOW}backup${NC}     Create database backup with verification"
     echo -e "  ${YELLOW}clean${NC}      Clean up old data and optimize storage"
+    echo -e "  ${YELLOW}retention${NC}  Purge old monitoring metrics (respect retention days)"
     echo -e "  ${YELLOW}doctor${NC}     Run comprehensive system diagnostics"
     echo -e "  ${YELLOW}help${NC}       Show this help message"
     echo
@@ -750,6 +751,7 @@ main() {
         status|s) cmd_status ;;
         config|c) cmd_config ;;
         optimize|o) cmd_optimize ;;
+    retention) cmd_retention ;;
         backup|b) cmd_backup ;;
         clean) cmd_clean ;;
         doctor|d) cmd_doctor ;;
@@ -760,6 +762,27 @@ main() {
             exit 1
             ;;
     esac
+}
+
+# Retention cleanup leveraging retention settings (v2.2)
+cmd_retention() {
+    log_header "🧽 Retention Cleanup"
+    if ! check_database; then return 1; fi
+    # Determine retention days
+    DAYS=$(sqlite3 "$CLAUDE_MEMORY_DB" "SELECT value FROM settings WHERE key='performance_monitoring_retention_days';" 2>/dev/null || echo "30")
+    [[ -z "$DAYS" ]] && DAYS=30
+    log_info "Retention window: $DAYS days"
+    CUTOFF=$(sqlite3 "$CLAUDE_MEMORY_DB" "SELECT datetime('now','-$DAYS days');")
+    echo -n "  Purging query_metrics... "
+    QM_DEL=$(sqlite3 "$CLAUDE_MEMORY_DB" "DELETE FROM query_metrics WHERE created_at < '$CUTOFF'; SELECT changes();" | tail -1)
+    echo -e "${GREEN}$QM_DEL removed${NC}"
+    echo -n "  Purging optimization_log... "
+    OL_DEL=$(sqlite3 "$CLAUDE_MEMORY_DB" "DELETE FROM optimization_log WHERE executed_at < '$CUTOFF'; SELECT changes();" | tail -1)
+    echo -e "${GREEN}$OL_DEL removed${NC}"
+    echo -n "  Purging stale agent_sessions... "
+    AS_DEL=$(sqlite3 "$CLAUDE_MEMORY_DB" "DELETE FROM agent_sessions WHERE last_active < '$CUTOFF'; SELECT changes();" | tail -1)
+    echo -e "${GREEN}$AS_DEL removed${NC}"
+    log_success "Retention cleanup complete"
 }
 
 # Run main function with all arguments

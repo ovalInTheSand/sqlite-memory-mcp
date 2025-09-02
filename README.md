@@ -11,27 +11,30 @@
 ## Quick Start
 
 ```bash
-# Clone & setup
-git clone <your-repo-url>
-cd sqlite-memory-mcp
-./setup.sh
+# One-line (cross‑platform) bootstrap
+git clone https://github.com/ovalInTheSand/sqlite-memory-mcp.git && \
+cd sqlite-memory-mcp && \
+python bootstrap.py --init-db
 
-# (Optional) Virtualenv for toolkit & tests
-scripts/setup_venv.sh
-source .venv/bin/activate
+# (Optional) add dev/test deps & run tests
+python bootstrap.py --init-db --dev --run-tests
 
-# Run tests (optional)
-pytest -q
+# Activate virtualenv afterwards (auto‑created .venv)
+#   PowerShell: .venv\Scripts\Activate.ps1
+#   bash/zsh  : source .venv/bin/activate
 
-# Container build & init (alternative)
-docker build -t mem .
-mkdir -p data
+# mem CLI examples (after activation)
+mem health
+mem optimize
+
+# Container alternative (only if you prefer Docker)
+docker build -t mem . && mkdir -p data && \
 docker run --rm -v $(pwd)/data:/data -e ALLOW_WRITES=1 mem \
-  python scripts/deploy_init.py /data/memory.db
+  python scripts/deploy_init.py /data/memory.db && \
 docker run --rm -v $(pwd)/data:/data mem mem health
 ```
 
-Your memory system is now ready. See full details below.
+Your memory system is now ready. The `bootstrap.py` script replaces multiple manual steps (`setup.sh`, manual venv creation, editable install, optional tests) with a single consistent entry point for Windows, WSL, Linux, and macOS. See full details below.
 
 ## Table of Contents
 
