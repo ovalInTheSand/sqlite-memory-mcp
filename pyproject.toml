@@ -1,0 +1,27 @@
+[project]
+name = "sqlite-memory-mcp"
+version = "0.3.0"
+description = "Self-learning agent memory system for MCP with SQLite backend"
+authors = [ { name = "OvalInTheSand" } ]
+readme = "README.md"
+requires-python = ">=3.10"
+license = "MIT"
+keywords = ["sqlite", "memory", "agents", "mcp", "fts5"]
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "Operating System :: OS Independent"
+]
+dependencies = []
+
+[project.optional-dependencies]
+dev = ["pytest>=8,<9"]
+
+[project.scripts]
+memory-cli = "templates.mcp_tools:main"
+
+[tool.setuptools.packages.find]
+include = ["templates*", "backend*"]
+
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
