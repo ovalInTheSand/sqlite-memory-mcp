@@ -34,3 +34,21 @@ Thumbs.db
 
 # Local configuration overrides
 config/settings.local.env
+
+# Virtual environments
+.venv/
+
+# Build / distribution artifacts
+build/
+dist/
+*.egg-info/
+
+# pytest cache
+.pytest_cache/
+
+# Coverage
+.coverage*
+htmlcov/
+
+# Logs
+*.log

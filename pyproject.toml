@@ -17,7 +17,7 @@ dependencies = []
 dev = ["pytest>=8,<9"]
 
 [project.scripts]
-memory-cli = "templates.mcp_tools:main"
+mem = "templates.mcp_tools:main"
 
 [tool.setuptools.packages.find]
 include = ["templates*", "backend*"]
@@ -25,3 +25,11 @@ include = ["templates*", "backend*"]
 [build-system]
 requires = ["setuptools>=68", "wheel"]
 build-backend = "setuptools.build_meta"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+addopts = ["--tb=short"]
+markers = [
+    "build: marks tests that require build dependencies"
+]

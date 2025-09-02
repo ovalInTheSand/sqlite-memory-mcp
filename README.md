@@ -8,42 +8,64 @@
 **Memory Graph:** Semantic relationship mapping 
 **Lightning Fast:** FTS5 search with intelligent caching
 
+## Quick Start
+
+```bash
+# Clone & setup
+git clone <your-repo-url>
+cd sqlite-memory-mcp
+./setup.sh
+
+# (Optional) Virtualenv for toolkit & tests
+scripts/setup_venv.sh
+source .venv/bin/activate
+
+# Run tests (optional)
+pytest -q
+
+# Container build & init (alternative)
+docker build -t mem .
+mkdir -p data
+docker run --rm -v $(pwd)/data:/data -e ALLOW_WRITES=1 mem \
+  python scripts/deploy_init.py /data/memory.db
+docker run --rm -v $(pwd)/data:/data mem mem health
+```
+
+Your memory system is now ready. See full details below.
+
 ## Table of Contents
 
-- [Key Features](#-key-features)
+- [Quick Start](#quick-start)
+- [Key Features](#key-features)
   - [Intelligent Memory Management](#intelligent-memory-management)
   - [Performance & Scalability](#performance--scalability)
   - [Dynamic Agent Schema](#dynamic-agent-schema)
   - [Advanced Analytics](#advanced-analytics)
   - [Ease of Use](#ease-of-use-new)
-- [What You Get](#-what-you-get)
-- [Quick Start](#-quick-start)
-  - [One-Command Setup](#-one-command-setup-new)
-  - [Management Commands](#️-management-commands-new)
-  - [Verify It's Working](#-verify-its-working)
-- [Architecture Overview](#️-architecture-overview)
+- [What You Get](#what-you-get)
+- [Architecture Overview](#architecture-overview)
   - [Core Tables](#core-tables)
   - [Performance & Monitoring](#performance--monitoring)
   - [Advanced Views](#advanced-views)
-- [Configuration](#-configuration)
+- [Configuration](#configuration)
   - [Performance Settings](#performance-settings-configsettingsenv)
   - [MCP Permissions](#mcp-permissions-claudesettingsjson)
-- [Usage Examples](#-usage-examples)
+- [Usage Examples](#usage-examples)
   - [Basic Memory Operations](#basic-memory-operations)
   - [Memory Relationship Management](#memory-relationship-management)
   - [Agent-Specific Tables](#agent-specific-tables)
   - [Performance Monitoring](#performance-monitoring)
-- [Advanced Features](#-advanced-features)
+- [Advanced Features](#advanced-features)
   - [Automatic Memory Tiering](#automatic-memory-tiering)
   - [Smart Relationship Discovery](#smart-relationship-discovery)
   - [Performance Optimization](#performance-optimization)
   - [Agent Resource Management](#agent-resource-management)
-- [Maintenance & Troubleshooting](#️-maintenance--troubleshooting)
+- [Maintenance & Troubleshooting](#maintenance--troubleshooting)
   - [Database Health Checks](#database-health-checks)
   - [Performance Tuning](#performance-tuning)
   - [Backup & Recovery](#backup--recovery)
-- [Monitoring & Analytics](#-monitoring--analytics)
-- [Code References](#-code-references)
+- [Monitoring & Analytics](#monitoring--analytics)
+- [Code References](#code-references)
   - [Setup Scripts](#setup-scripts)
   - [Configuration Files](#configuration-files)
   - [Python Toolkit](#python-toolkit)
@@ -62,6 +84,9 @@
 - **Enhanced WAL mode** with autocheckpoint for better concurrency
 - **Memory-mapped I/O** (256MB) and intelligent caching (64MB)
 - **Query performance monitoring** with metrics and suggestions
+- **Backend hardening** with environment value clamping and immutable mode
+- **Connection pooling** for reduced overhead (optional, configurable)
+- **Health monitoring** with integrity checks and pragma validation
 
 ### **Dynamic Agent Schema**
 - **Agent-specific tables** without complex migration frameworks
@@ -90,38 +115,27 @@
 - **Python toolkit** (`templates/mcp_tools.py`) for advanced operations
 - **User/project scope** MCP registration with enhanced permissions
 - **One-command installation** with automatic dependency management
+- **Versioned schema** (see `VERSION.md`) with documented upgrade path
 
-## **Quick Start**
+## Management Commands
 
-### **One-Command Setup** (New!)
 ```bash
-# Clone and run interactive setup
-git clone <your-repo-url>
-cd sqlite-memory-mcp
-./setup.sh
+./manage.sh status      # Health dashboard
+./manage.sh doctor      # Diagnose & fix
+./manage.sh optimize    # Maintenance & tuning
+./manage.sh backup      # Verified backups
+./manage.sh config      # Interactive settings
 ```
 
-The interactive installer handles everything:
-- ✅ **Guided configuration** with smart defaults
-- ✅ **Automatic dependency installation** 
-- ✅ **Database creation** with optimized schema
-- ✅ **MCP server registration** (user or project scope)
-- ✅ **Permission setup** with security options
+## Container Usage (Beta)
 
-### **Management Commands** (New!)
 ```bash
-./manage.sh status      # Comprehensive health dashboard
-./manage.sh doctor      # Diagnose and fix issues  
-./manage.sh optimize    # Performance tuning and cleanup
-./manage.sh backup      # Create verified backups
-./manage.sh config      # Change settings interactively
-```
-
-### **Verify It's Working**
-```bash
-# In Claude Code
-/mcp                    # Check server status  
-"Show database health"  # Test functionality
+docker build -t mem .
+mkdir -p data
+docker run --rm -v $(pwd)/data:/data -e ALLOW_WRITES=1 mem \
+  python scripts/deploy_init.py /data/memory.db
+docker run --rm -v $(pwd)/data:/data mem mem health
+docker compose up -d   # optional compose service
 ```
 
 **Done!** Your intelligent memory system is ready.
@@ -155,9 +169,11 @@ CLAUDE_MEMORY_DB="$HOME/.claude/memory/claude_memory.db"
 
 # Performance Tuning
 BUSY_TIMEOUT_MS=30000           # Connection timeout
-CACHE_SIZE_KIB=65536           # 64MB cache 
-MMAP_SIZE_BYTES=268435456      # 256MB memory mapping
-WAL_AUTOCHECKPOINT=1000        # Checkpoint frequency
+CACHE_SIZE_KIB=65536           # 64MB cache (clamped: 16 - 524288)
+MMAP_SIZE_BYTES=268435456      # 256MB memory mapping (clamped: 1MB - 2GB)
+WAL_AUTOCHECKPOINT=1000        # Checkpoint frequency (clamped: 1 - 100000)
+BACKEND_POOL_SIZE=0            # Connection pooling (0=disabled, max=small)
+VERIFY_ON_CONNECT=0            # Integrity check on connect (1=enabled)
 
 # Memory Management
 MEMORY_TIER_PROMOTION_THRESHOLD=50  # Promote after N accesses
@@ -262,6 +278,45 @@ ORDER BY avg_query_time_ms DESC;
 
 ## **Advanced Features**
 
+### **Backend Hardening & Security**
+Enhanced SQLite backend with production-ready safety features:
+
+- **Environment Value Clamping**: Automatically clamps `CACHE_SIZE_KIB` (16-524288), `MMAP_SIZE_BYTES` (1MB-2GB), and `WAL_AUTOCHECKPOINT` (1-100000) to safe ranges with warning logs
+- **Immutable Read-Only Mode**: Defense-in-depth when `ALLOW_WRITES=0` - uses SQLite's immutable mode with clear error messages for missing files
+- **Connection Pooling**: Optional small connection pool (`BACKEND_POOL_SIZE`) for reduced connection overhead
+- **Health Monitoring**: `health_check()` method reports key pragma settings and database status
+- **Integrity Verification**: Optional database integrity check on connect (`VERIFY_ON_CONNECT=1`)
+- **Structured Logging**: Detailed pragma application logs with mode and path information
+
+### **Upgrade Notes (0.3.0)**
+Key changes in 0.3.0 (backend hardening release):
+
+- Added environment value clamping with warnings (`backend_config_clamped`, `invalid_env_int`)
+- Immutable read-only mode clarified (friendlier missing DB error)
+- Optional connection pooling (`BACKEND_POOL_SIZE`) with pool metrics in `health_check()`
+- Integrity verification on connect (`VERIFY_ON_CONNECT=1`)
+- Added pool metrics: `pool_hits`, `pool_misses`, `pool_available_read`, `pool_available_write`
+- Added `health_check()` for observability
+
+Sample `health_check()` output:
+```json
+{
+  "ok": true,
+  "path": "/home/user/.claude/memory/claude_memory.db",
+  "foreign_keys": 1,
+  "journal_mode": "wal",
+  "synchronous": 1,
+  "cache_size": -65536,
+  "mmap_size": 268435456,
+  "wal_autocheckpoint": 1000,
+  "pool_size_configured": 4,
+  "pool_available_read": 0,
+  "pool_available_write": 2,
+  "pool_hits": 10,
+  "pool_misses": 3
+}
+```
+
 ### **Automatic Memory Tiering**
 Memories automatically move between tiers based on access patterns:
 - **Hot** (frequently accessed, < 1 day old)
@@ -300,6 +355,12 @@ sqlite3 "$CLAUDE_MEMORY_DB" "SELECT * FROM optimization_log ORDER BY executed_at
 
 # Manual optimization
 sqlite3 "$CLAUDE_MEMORY_DB" "PRAGMA optimize; PRAGMA wal_checkpoint;"
+
+# Dump backend config + health (JSON)
+python -m backend.sqlite_backend "$CLAUDE_MEMORY_DB" > backend_health.json
+
+# Safe backup (writes) using VACUUM INTO
+python scripts/backup_safe.py "$CLAUDE_MEMORY_DB" "$HOME/.claude/memory/backup_latest.db"
 ```
 
 ### **Performance Tuning**
@@ -332,8 +393,32 @@ The system provides comprehensive monitoring through views and the Python toolki
 - **Resource utilization** - Table sizes, index usage, memory consumption
 - **Maintenance scheduling** - Automatic optimization based on usage patterns
 
-Use the `templates/mcp_tools.py` toolkit for programmatic access to all monitoring and management functions.
+Use the `templates/mcp_tools.py` toolkit or the installed `mem` CLI for programmatic and shell access to all monitoring and management functions.
 
+## Versioning & Upgrades
+
+Current schema version: see `VERSION.md` (currently 2.6). Package version (PyPI / `pyproject.toml`) may differ from schema version; runtime imports `backend.SCHEMA_VERSION` for authoritative value. Below is the fast‑path example for the earliest upgrade (2.0 -> 2.1); for subsequent versions apply migrations sequentially.
+
+```
+sqlite3 "$CLAUDE_MEMORY_DB" <<'SQL'
+DROP TRIGGER IF EXISTS projects_ut;
+DROP TRIGGER IF EXISTS agents_ut;
+DROP TRIGGER IF EXISTS memory_ut;
+DROP TRIGGER IF EXISTS docs_ut;
+DROP TRIGGER IF EXISTS memory_auto_archive;  -- ensure replacement
+.read sql/schema.sql
+UPDATE settings SET value='2.1' WHERE key='schema_version'; -- then apply later migrations sequentially
+SQL
+```
+
+Verify:
+```
+sqlite3 "$CLAUDE_MEMORY_DB" "SELECT value FROM settings WHERE key='schema_version';"
+```
+
+After 2.1, maintain `updated_at` columns in application code (touch triggers removed). For later versions just apply each numbered migration; the consolidated `sql/schema.sql` remains idempotent for fresh installs.
+
+Note: This project intentionally has no external runtime dependencies (stdlib only) for a minimal supply chain surface area.
 ## **Code References**
 
 ### **Setup Scripts**

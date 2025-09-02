@@ -1,0 +1,30 @@
+version: '3.8'
+
+services:
+  sqlite-memory-mcp:
+    build: .
+    container_name: mem-server
+    volumes:
+      - ./data:/data
+      - ./config:/config
+    environment:
+      - CLAUDE_MEMORY_DB=/data/memory.db
+      - ALLOW_WRITES=1
+      - BACKEND_POOL_SIZE=5
+      - CACHE_SIZE_KIB=32768
+      - MMAP_SIZE_BYTES=268435456
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "from backend.sqlite_backend import SQLiteBackend; print('OK' if SQLiteBackend('/data/memory.db').health_check()['ok'] else exit(1))"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+volumes:
+  data:
+    driver: local
+  config:
+    driver: local

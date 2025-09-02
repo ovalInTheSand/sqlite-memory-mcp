@@ -1,0 +1,44 @@
+#!/usr/bin/env python3
+"""Lightweight CLI wrapper for SQLiteMemoryTools.
+
+Usage: mem <health|optimize|retention|suggestions>
+Environment:
+  CLAUDE_MEMORY_DB - path to database (defaults to ~/.claude/memory/claude_memory.db)
+"""
+import os, sys, json
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parent.parent
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+from templates.mcp_tools import SQLiteMemoryTools  # noqa: E402
+
+
+def main():
+    if len(sys.argv) < 2:
+        print(__doc__)
+        return 1
+    action = sys.argv[1]
+    db_path = os.environ.get(
+        "CLAUDE_MEMORY_DB", str(Path.home() / ".claude" / "memory" / "claude_memory.db")
+    )
+    if not Path(db_path).exists() and os.environ.get("ALLOW_WRITES", "0") != "1":
+        print(f"Database not found: {db_path}", file=sys.stderr)
+        return 2
+    tools = SQLiteMemoryTools(db_path)
+    dispatch = {
+        "health": tools.get_database_health,
+        "optimize": tools.optimize_database,
+        "retention": tools.retention_cleanup,
+        "suggestions": tools.get_optimization_suggestions,
+    }
+    if action not in dispatch:
+        print(__doc__)
+        return 1
+    result = dispatch[action]()
+    print(json.dumps(result, indent=2))
+    return 0
+
+
+if __name__ == "__main__":  # pragma: no cover
+    raise SystemExit(main())
